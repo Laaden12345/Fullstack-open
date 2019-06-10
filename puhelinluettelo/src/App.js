@@ -4,6 +4,7 @@ import Persons from "./Persons/Persons";
 import Filter from "./Filter/Filter";
 import personService from "./services/personsService";
 import personsService from "./services/personsService";
+import Notification from "./Notifications/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -11,17 +12,26 @@ const App = () => {
   const [newName, setName] = useState("");
   const [newNumber, setNumber] = useState("");
   const [nameFilter, setFilter] = useState("");
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     personService.getAll().then(initialPersons => setPersons(initialPersons));
   }, []);
 
   const updatePerson = (id, person) => {
-    personsService.update(id, person).then(returnedPerson => {
-      setPersons(
-        persons.map(person => (person.id !== id ? person : returnedPerson))
+    personsService
+      .update(id, person)
+      .then(returnedPerson => {
+        setPersons(
+          persons.map(person => (person.id !== id ? person : returnedPerson))
+        );
+      })
+      .then(setNotification(`${person.name}'s number was edited.`))
+      .then(
+        setInterval(() => {
+          setNotification(null);
+        }, 5000)
       );
-    });
   };
   const addName = event => {
     event.preventDefault();
@@ -46,25 +56,41 @@ const App = () => {
       }
     } else {
       const nameObject = { name: newName, number: newNumber };
-      personService.create(nameObject).then(returnedPerson => {
-        setPersons(persons.concat(returnedPerson));
-        setName("");
-        setNumber("");
-        setFilter("");
-        setFilteredPersons(persons);
-      });
+      personService
+        .create(nameObject)
+        .then(returnedPerson => {
+          setPersons(persons.concat(returnedPerson));
+          setName("");
+          setNumber("");
+          setFilter("");
+          setFilteredPersons(persons);
+        })
+        .then(setNotification(`${nameObject.name} was added to phonebook.`))
+        .then(
+          setInterval(() => {
+            setNotification(null);
+          }, 5000)
+        );
     }
   };
   const removePerson = (event, id) => {
     event.preventDefault();
+    const personToDelete = persons.find(person => person.id === id);
     if (
-      window.confirm(
-        `Are you sure you want to delete ${
-          persons.find(person => person.id === id).name
-        }`
-      )
+      window.confirm(`Are you sure you want to delete ${personToDelete.name}`)
     ) {
-      personService.remove(id);
+      personService
+        .remove(id)
+        .then(
+          setNotification(
+            `${personToDelete.name} was deleted from the phonebook.`
+          )
+        )
+        .then(
+          setInterval(() => {
+            setNotification(null);
+          }, 5000)
+        );
       setPersons(persons.filter(person => person.id !== id));
     }
   };
@@ -90,6 +116,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification} />
       <Filter nameFilter={nameFilter} handleFilterChange={handleFilterChange} />
       <h2>Add a new</h2>
       <PersonForm
