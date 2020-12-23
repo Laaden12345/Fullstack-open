@@ -1,56 +1,60 @@
-import React, { useState, useEffect } from "react";
-import PersonForm from "./PersonFrom/PersonForm";
-import Persons from "./Persons/Persons";
-import Filter from "./Filter/Filter";
-import personService from "./services/personsService";
-import personsService from "./services/personsService";
-import Notification from "./Notifications/Notification";
+import React, { useState, useEffect } from 'react';
+import PersonForm from './PersonFrom/PersonForm';
+import Persons from './Persons/Persons';
+import Filter from './Filter/Filter';
+import personService from './services/personsService';
+import personsService from './services/personsService';
+import Notification from './Notifications/Notification';
+import NotificationError from './Notifications/NotificationError';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [filteredPersons, setFilteredPersons] = useState(persons);
-  const [newName, setName] = useState("");
-  const [newNumber, setNumber] = useState("");
-  const [nameFilter, setFilter] = useState("");
+  const [newName, setName] = useState('');
+  const [newNumber, setNumber] = useState('');
+  const [nameFilter, setFilter] = useState('');
   const [notification, setNotification] = useState(null);
+  const [notificationError, setNotificationError] = useState(null);
 
   useEffect(() => {
-    personService.getAll().then(initialPersons => setPersons(initialPersons));
+    personService.getAll().then((initialPersons) => setPersons(initialPersons));
   }, []);
 
   const updatePerson = (id, person) => {
     personsService
       .update(id, person)
-      .then(returnedPerson => {
+      .then((returnedPerson) => {
         setPersons(
-          persons.map(person => (person.id !== id ? person : returnedPerson))
+          persons.map((person) => (person.id !== id ? person : returnedPerson)),
         );
       })
       .then(setNotification(`${person.name}'s number was edited.`))
       .then(
         setInterval(() => {
           setNotification(null);
-        }, 5000)
+        }, 5000),
       );
   };
-  const addName = event => {
+  const addName = (event) => {
     event.preventDefault();
     if (
       persons.find(
-        person => person.name === newName && person.number === newNumber
+        (person) => person.name === newName && person.number === newNumber,
       )
     ) {
       window.alert(`${newName} is already added to phonebook`);
 
-      setFilter("");
+      setFilter('');
       setFilteredPersons(persons);
-    } else if (persons.find(person => person.name === newName)) {
+    } else if (persons.find((person) => person.name === newName)) {
       if (
         window.confirm(
-          `This person already exists in the phonebook, replace old number with the new one?`
+          `This person already exists in the phonebook, replace old number with the new one?`,
         )
       ) {
-        const personToUpdate = persons.find(person => person.name === newName);
+        const personToUpdate = persons.find(
+          (person) => person.name === newName,
+        );
         const changedPerson = { ...personToUpdate, number: newNumber };
         updatePerson(changedPerson.id, changedPerson);
       }
@@ -58,24 +62,30 @@ const App = () => {
       const nameObject = { name: newName, number: newNumber };
       personService
         .create(nameObject)
-        .then(returnedPerson => {
+        .then((returnedPerson) => {
           setPersons(persons.concat(returnedPerson));
-          setName("");
-          setNumber("");
-          setFilter("");
+          setName('');
+          setNumber('');
+          setFilter('');
           setFilteredPersons(persons);
-        })
-        .then(setNotification(`${nameObject.name} was added to phonebook.`))
-        .then(
+          setNotification(`${nameObject.name} was added to phonebook.`);
           setInterval(() => {
             setNotification(null);
-          }, 5000)
-        );
+          }, 5000);
+        })
+        .catch((error) => {
+          setNotificationError(error.response.data.error);
+        })
+        .then(
+          setInterval(() => {
+            setNotificationError(null);
+          }, 5000),
+        )
     }
   };
   const removePerson = (event, id) => {
     event.preventDefault();
-    const personToDelete = persons.find(person => person.id === id);
+    const personToDelete = persons.find((person) => person.id === id);
     if (
       window.confirm(`Are you sure you want to delete ${personToDelete.name}`)
     ) {
@@ -83,32 +93,32 @@ const App = () => {
         .remove(id)
         .then(
           setNotification(
-            `${personToDelete.name} was deleted from the phonebook.`
-          )
+            `${personToDelete.name} was deleted from the phonebook.`,
+          ),
         )
         .then(
           setInterval(() => {
             setNotification(null);
-          }, 5000)
+          }, 5000),
         );
-      setPersons(persons.filter(person => person.id !== id));
+      setPersons(persons.filter((person) => person.id !== id));
     }
   };
 
-  const handlePersonChange = event => {
+  const handlePersonChange = (event) => {
     setName(event.target.value);
   };
 
-  const handleNumberChange = event => {
+  const handleNumberChange = (event) => {
     setNumber(event.target.value);
   };
 
-  const handleFilterChange = event => {
+  const handleFilterChange = (event) => {
     setFilter(event.target.value);
-    const newFilteredPersons = persons.filter(person =>
+    const newFilteredPersons = persons.filter((person) =>
       person.name
         .toLocaleLowerCase()
-        .includes(event.target.value.toLocaleLowerCase())
+        .includes(event.target.value.toLocaleLowerCase()),
     );
     setFilteredPersons(newFilteredPersons);
   };
@@ -117,6 +127,7 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
       <Notification message={notification} />
+      <NotificationError message={notificationError} />
       <Filter nameFilter={nameFilter} handleFilterChange={handleFilterChange} />
       <h2>Add a new</h2>
       <PersonForm

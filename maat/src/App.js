@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./App.css";
 
 function Information({ country }) {
+  console.log('haloo');
+  
   return (
     <div>
       <h2>{country.name}</h2>
@@ -18,21 +21,33 @@ function Information({ country }) {
   );
 }
 
-function Results({ countries }) {
-  if (countries.length > 10) {
-    return <div>Too many matches, please specify your search</div>;
-  } else if (countries.length > 1) {
-    return countries.map(country => (
-      <div key={country.name}>{country.name}</div>
-    ));
-  } else if (countries.length === 1) {
-    const country = countries[0];
-    return <Information country={country} />;
+function Results({ selectedCountry, setSelectedCountry, countries }) {
+  if (!selectedCountry) {
+    if (countries.length === 1) {
+      setSelectedCountry(countries[0])
+      return <Information country={selectedCountry}/>
+    }
+    else if (countries.length > 10) {
+      setSelectedCountry(null)
+      return <div>Too many matches, please specify your search</div>;
+    } else if (countries.length > 1) {
+      return countries.map(country => (
+        <div key={country.name} className="countryList">
+          <div>{country.name}</div>
+          <button onClick={() => setSelectedCountry(country)}>show</button>
+        </div>
+      ));
+    }
+  }
+  else {
+    return <Information country={selectedCountry}/>
+    
   }
   return null;
 }
 
 function App() {
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const [countries, setCountries] = useState([]);
   const [filteredCountries, setFilteredCountries] = useState(countries);
   const [countryFilter, setCountryFilter] = useState([]);
@@ -53,6 +68,8 @@ function App() {
     );
     setFilteredCountries(newFilteredCountries);
   };
+  console.log('countries', countries);
+  
 
   return (
     <div>
@@ -60,7 +77,7 @@ function App() {
         find countries
         <input value={countryFilter} onChange={handleFilterChange} />
       </div>
-      <Results countries={countryFilter ? filteredCountries : countries} />
+      <Results selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} countries={countryFilter ? filteredCountries : countries}/>
     </div>
   );
 }

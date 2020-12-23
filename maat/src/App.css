@@ -3,6 +3,10 @@
   width: 200px;
 }
 
+.countryList {
+  display: flex;
+}
+
 img  {
   height: 100%;
   width: 100%;
